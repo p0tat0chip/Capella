@@ -1,148 +1,165 @@
-import { SafeAreaView, Text, StyleSheet, Pressable, View } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { CircleAlert as AlertCircle, Share2, Activity, Mic } from 'lucide-react-native';
+import React from "react";
+import {
+    View,
+    Text,
+    ActivityIndicator,
+    StyleSheet,
+    TouchableOpacity,
+    Linking,
+    Alert
+} from "react-native";
+import { useSafetyAnalysisStore } from "@/store/store"; // Adjust the import path as needed
 
-export default function SafetyScreen() {
+function getRatingColor(rating) {
+    switch (rating) {
+        case "HIGH":
+            return "#28a745"; // green
+        case "MEDIUM":
+            return "#ffc107"; // yellow/orange
+        case "LOW":
+            return "#dc3545"; // red
+        default:
+            return "#6c757d"; // gray for unknown
+    }
+}
+
+export default function SafetyAnalysisDisplay() {
+    // Get the analysis data from the store.
+    const analysis = useSafetyAnalysisStore((state) => state.analysis);
+
+    const handleSOSPress = () => {
+        Alert.alert("SOS", "Emergency services have been alerted!");
+    };
+
+    const handleCallEmergency = () => {
+        const emergencyNumber = "911"; // Change as necessary
+        Linking.openURL(`tel:${emergencyNumber}`).catch((err) =>
+            console.error("Error dialing emergency number:", err)
+        );
+    };
+
     return (
-        <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Safety Center</Text>
+        <View style={styles.container}>
+            <TouchableOpacity style={styles.sosButton} onPress={handleSOSPress}>
+                <Text style={styles.sosText}>SOS</Text>
+            </TouchableOpacity>
 
-            {/* SOS Button */}
-            <Pressable style={styles.sosButton}>
-                <AlertCircle color="#FFFFFF" size={24} />
-                <Text style={styles.sosButtonText}>Emergency SOS</Text>
-            </Pressable>
+            <View style={styles.spacer} />
 
-            {/* Live Tracking Card */}
-            <BlurView intensity={80} style={styles.card}>
-                <View style={styles.cardHeader}>
-                    <Share2 size={20} color="#007AFF" />
-                    <Text style={styles.cardTitle}>Live Tracking</Text>
-                </View>
-                <Text style={styles.cardDescription}>
-                    Share your live location with trusted contacts
-                </Text>
-                <Pressable style={styles.shareButton}>
-                    <Text style={styles.shareButtonText}>Share Trip</Text>
-                </Pressable>
-            </BlurView>
+            <View style={styles.card}>
+                <Text style={styles.cardTitle}>Safety Analysis</Text>
+                {analysis ? (
+                    <View>
+                        <View
+                            style={[
+                                styles.ratingContainer,
+                                { backgroundColor: getRatingColor(analysis.safetyRating) },
+                            ]}
+                        >
+                            <Text style={styles.ratingText}>
+                                Safety Rating: {analysis.safetyRating}
+                            </Text>
+                        </View>
+                        <Text style={styles.factorText}>
+                            Crime Factor: {analysis.crimeFactor}
+                        </Text>
+                        <Text style={styles.factorText}>
+                            Lighting Factor: {analysis.lightingFactor}
+                        </Text>
+                        <Text style={styles.factorText}>
+                            Surveillance Factor: {analysis.surveillanceFactor}
+                        </Text>
+                        <Text style={styles.factorText}>
+                            Emergency Factor: {analysis.emergencyFactor}
+                        </Text>
+                    </View>
+                ) : (
+                    <ActivityIndicator size="large" color="#007bff" />
+                )}
+            </View>
 
-            {/* Safety Score Card */}
-            <BlurView intensity={80} style={styles.card}>
-                <View style={styles.cardHeader}>
-                    <Activity size={20} color="#007AFF" />
-                    <Text style={styles.cardTitle}>Safety Score</Text>
-                </View>
-                <View style={styles.scoreContainer}>
-                    <View style={[styles.scoreBar, { width: '75%' }]} />
-                </View>
-                <Text style={styles.scoreText}>Area Safety: 75/100</Text>
-            </BlurView>
-
-            {/* Voice SOS Card */}
-            <BlurView intensity={80} style={styles.card}>
-                <View style={styles.cardHeader}>
-                    <Mic size={20} color="#007AFF" />
-                    <Text style={styles.cardTitle}>Voice SOS</Text>
-                </View>
-                <Text style={styles.cardDescription}>
-                    AI-powered voice detection for emergency situations
-                </Text>
-                <View style={styles.voiceStatus}>
-                    <View style={styles.statusIndicator} />
-                    <Text style={styles.statusText}>Listening</Text>
-                </View>
-            </BlurView>
-        </SafeAreaView>
+            <TouchableOpacity style={styles.emergencyButton} onPress={handleCallEmergency}>
+                <Text style={styles.emergencyButtonText}>Call Emergency Contact</Text>
+            </TouchableOpacity>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
-        padding: 16,
-    },
-    title: {
-        fontSize: 28,
-        fontWeight: '700',
-        marginBottom: 24,
+        backgroundColor: "#f2f2f2",
+        alignItems: "center",
+        padding: 20,
+        justifyContent: "space-between",
     },
     sosButton: {
-        backgroundColor: '#FF3B30',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 24,
-        gap: 8,
+        backgroundColor: "#ff4d4d",
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 40,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 2,
+        elevation: 5,
     },
-    sosButtonText: {
-        color: '#FFFFFF',
-        fontSize: 18,
-        fontWeight: '600',
+    sosText: {
+        color: "#fff",
+        fontSize: 24,
+        fontWeight: "bold",
+    },
+    spacer: {
+        flex: 1,
     },
     card: {
-        backgroundColor: 'rgba(242, 242, 247, 0.8)',
-        borderRadius: 16,
-        padding: 16,
-        marginBottom: 16,
-    },
-    cardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
-        gap: 8,
+        backgroundColor: "#fff",
+        width: "100%",
+        borderRadius: 10,
+        padding: 20,
+        marginBottom: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
     },
     cardTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        marginBottom: 10,
+        textAlign: "center",
+    },
+    ratingContainer: {
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 10,
+    },
+    ratingText: {
+        color: "#fff",
         fontSize: 18,
-        fontWeight: '600',
+        textAlign: "center",
     },
-    cardDescription: {
-        fontSize: 14,
-        color: '#8E8E93',
-        marginBottom: 16,
+    factorText: {
+        fontSize: 16,
+        textAlign: "center",
+        color: "#333",
+        marginVertical: 2,
     },
-    shareButton: {
-        backgroundColor: '#007AFF',
-        padding: 12,
-        borderRadius: 8,
-        alignItems: 'center',
+    emergencyButton: {
+        backgroundColor: "#007bff",
+        width: 320,
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 5,
+        marginBottom: 40,
     },
-    shareButtonText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-    },
-    scoreContainer: {
-        height: 8,
-        backgroundColor: '#E5E5EA',
-        borderRadius: 4,
-        marginBottom: 8,
-        overflow: 'hidden',
-    },
-    scoreBar: {
-        height: '100%',
-        borderRadius: 4,
-        backgroundColor: '#34C759',
-    },
-    scoreText: {
-        fontSize: 14,
-        color: '#8E8E93',
-    },
-    voiceStatus: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    statusIndicator: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: '#34C759',
-    },
-    statusText: {
-        fontSize: 14,
-        color: '#8E8E93',
+    emergencyButtonText: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "600",
     },
 });

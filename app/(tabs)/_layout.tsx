@@ -8,7 +8,6 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import {FontAwesome, MaterialCommunityIcons, Ionicons} from "@expo/vector-icons";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -38,13 +37,6 @@ export default function TabLayout() {
             animation: 'none'
         }}
       />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'Rides',
-          tabBarIcon: ({ color }) => <Ionicons name="calendar-clear-outline" size={24} color={color} />,
-        }}
-      />
         <Tabs.Screen
             name="profile"
             options={{
@@ -60,10 +52,15 @@ export default function TabLayout() {
             }}
         />
         <Tabs.Screen
-            name="support"
+            name="payment"
             options={{
-                title: 'Support',
-                tabBarIcon: ({ color }) => <MaterialCommunityIcons name="head-question" size={24} color="black" />,
+                href: null,  // This makes the tab not appear in the tab bar
+            }}
+        />
+        <Tabs.Screen
+            name="chatbot"
+            options={{
+                href: null,  // This makes the tab not appear in the tab bar
             }}
         />
     </Tabs>

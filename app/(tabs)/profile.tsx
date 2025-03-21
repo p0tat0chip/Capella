@@ -1,18 +1,49 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { CreditCard, Bell, MessageSquare, Settings, ChevronRight } from 'lucide-react-native';
+import { View, Text, StyleSheet, SafeAreaView, Pressable, Alert } from 'react-native';
+import { CreditCard, Bell, MessageSquare, Settings, ChevronRight, LogOut } from 'lucide-react-native';
+import { useAuthStore } from '@/store/authStore';
+import { router, Link } from 'expo-router';
 
 export default function ProfileScreen() {
+    const { user, signOut } = useAuthStore();
+
+    const handleLogout = async () => {
+        Alert.alert(
+            "Logout",
+            "Are you sure you want to logout?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Logout",
+                    style: "destructive",
+                    onPress: async () => {
+                        await signOut();
+                        router.replace('/onboarding');
+                    }
+                }
+            ]
+        );
+    };
+
+    const handlePayment = () => {
+        router.push('/payment');
+    }
+    const handleChatBot = () => {
+        router.push('/chatbot');
+    }
     return (
-        <ScrollView style={styles.container}>
+        <SafeAreaView style={[styles.container, { marginTop: 24 }]}>
             <View style={styles.header}>
                 <View style={styles.avatar} />
-                <Text style={styles.name}>John Doe</Text>
-                <Text style={styles.email}>john.doe@example.com</Text>
+                <Text style={styles.name}>{user?.email?.split('@')[0] || 'User'}</Text>
+                <Text style={styles.email}>{user?.email || 'email@example.com'}</Text>
             </View>
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Payment Methods</Text>
-                <Pressable style={styles.menuItem}>
+                <Pressable style={styles.menuItem} onPress={handlePayment}>
                     <View style={styles.menuItemLeft}>
                         <CreditCard size={20} color="#007AFF" />
                         <Text style={styles.menuItemText}>Manage Payment Methods</Text>
@@ -23,7 +54,7 @@ export default function ProfileScreen() {
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Support</Text>
-                <Pressable style={styles.menuItem}>
+                <Pressable style={styles.menuItem} onPress={handleChatBot}>
                     <View style={styles.menuItemLeft}>
                         <MessageSquare size={20} color="#007AFF" />
                         <Text style={styles.menuItemText}>Chat with Support</Text>
@@ -31,25 +62,16 @@ export default function ProfileScreen() {
                     <ChevronRight size={20} color="#8E8E93" />
                 </Pressable>
             </View>
-
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Preferences</Text>
-                <Pressable style={styles.menuItem}>
+                <Pressable style={[styles.menuItem, styles.logoutButton]} onPress={handleLogout}>
                     <View style={styles.menuItemLeft}>
-                        <Bell size={20} color="#007AFF" />
-                        <Text style={styles.menuItemText}>Notifications</Text>
+                        <LogOut size={20} color="#FF3B30" />
+                        <Text style={[styles.menuItemText, styles.logoutText]}>Logout</Text>
                     </View>
-                    <ChevronRight size={20} color="#8E8E93" />
-                </Pressable>
-                <Pressable style={styles.menuItem}>
-                    <View style={styles.menuItemLeft}>
-                        <Settings size={20} color="#007AFF" />
-                        <Text style={styles.menuItemText}>Settings</Text>
-                    </View>
-                    <ChevronRight size={20} color="#8E8E93" />
+                    <ChevronRight size={20} color="#FF3B30" />
                 </Pressable>
             </View>
-        </ScrollView>
+        </SafeAreaView>
     );
 }
 
@@ -103,5 +125,11 @@ const styles = StyleSheet.create({
     },
     menuItemText: {
         fontSize: 16,
+    },
+    logoutButton: {
+        marginTop: 8,
+    },
+    logoutText: {
+        color: '#FF3B30',
     },
 });

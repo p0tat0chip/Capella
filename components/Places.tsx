@@ -4,14 +4,18 @@ import MapView, { Marker } from 'react-native-maps';
 import axios from 'axios';
 import debounce from 'lodash.debounce';
 import { Colors } from "@/constants/Colors";
+import { useDestinationStore, useLatitudeStore, useLongitudeStore } from "@/store/store";
 
-const GOOGLE_PLACES_API_KEY = ""; // Replace with your actual API Key
+const GOOGLE_PLACES_API_KEY = "AIzaSyCE6NPRhq4JC0-QbJmmNd-rwBCuvGsLytk"; // Replace with your actual API Key
 
 export const GooglePlacesSearch = ({ placeholder, onSelect, inputRef }) => {
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [suggestions, setSuggestions] = useState([]);
+    const setDestination = useDestinationStore((state) => state.setDestination);
+    const setLatitude = useLatitudeStore((state) => state.setLatitude);
+    const setLongitude = useLongitudeStore((state) => state.setLongitude);
 
     const fetchPlaces = useCallback(
         debounce(async (text) => {
@@ -40,7 +44,7 @@ export const GooglePlacesSearch = ({ placeholder, onSelect, inputRef }) => {
             } finally {
                 setLoading(false);
             }
-        }, 500), // Debounce 500ms
+        }, 500),
         []
     );
 
@@ -77,54 +81,61 @@ export const GooglePlacesSearch = ({ placeholder, onSelect, inputRef }) => {
                     data={suggestions}
                     keyExtractor={(item, index) => index.toString()}
                     style={styles.suggestionsList}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity
-                            onPress={() => {
-                                setQuery(item.displayName.text);
-                                setSuggestions([]);
-                                onSelect({
-                                    latitude: item.location.latitude,
-                                    longitude: item.location.longitude
-                                });
-                            }}
-                            style={styles.suggestionItem}
-                        >
-                            <Text style={styles.suggestionTitle}>{item.displayName.text}</Text>
-                            <Text style={styles.suggestionSubtitle}>{item.formattedAddress}</Text>
-                        </TouchableOpacity>
-                    )}
+                    renderItem={({ item }) => {
+                        // Safely determine the display name
+                        const displayName = typeof item.displayName === 'object' ? item.displayName.text : item.displayName;
+                        return (
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setQuery(displayName);
+                                    setSuggestions([]);
+                                    const location = {
+                                        latitude: item.location.latitude,
+                                        longitude: item.location.longitude,
+                                        address: item.formattedAddress,
+                                    };
+                                    onSelect(location);
+                                    setDestination(location.address);
+                                    setLatitude(location.latitude);
+                                    setLongitude(location.longitude);
+                                }}
+                                style={styles.suggestionItem}
+                            >
+                                <Text style={styles.suggestionTitle}>{displayName}</Text>
+                                <Text style={styles.suggestionSubtitle}>{item.formattedAddress}</Text>
+                            </TouchableOpacity>
+                        );
+                    }}
                 />
             )}
+            <Text></Text>
         </View>
     );
 };
 
 const MapWithSearch = ({ inputRef }) => {
-    const [destination, setDestination] = useState(null);
-
-    // Compute the region dynamically based on whether a destination is selected
+    const destination = useDestinationStore((state) => state.destination);
+    const latitude = useLatitudeStore((state) => state.latitude);
+    const longitude = useLongitudeStore((state) => state.longitude);
+    const coord = { latitude: latitude, longitude: longitude };
     const region = destination ? {
-        latitude: destination.latitude,
-        longitude: destination.longitude,
-        latitudeDelta: 0.01, // Zoom in when a destination is selected
+        latitude: latitude,
+        longitude: longitude,
+        latitudeDelta: 0.01,
         longitudeDelta: 0.01,
     } : {
-        latitude: 28.6139, // Default location (Delhi)
-        longitude: 77.2090,
-        latitudeDelta: 0.1,  // Broader view initially
-        longitudeDelta: 0.1,
+        latitude: 37.78825,
+        longitude: -122.4324,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
     };
 
     return (
         <View style={styles.mapContainer}>
-            <MapView
-                style={styles.map}
-                region={region} // Use dynamic region instead of initialRegion
-            >
-                {destination && <Marker coordinate={destination} title="Destination" />}
+            <MapView style={styles.map} region={region}>
+                {destination && <Marker coordinate={coord} title="Destination" description={destination} />}
             </MapView>
-
-            <GooglePlacesSearch placeholder="Where to?" onSelect={setDestination} inputRef={inputRef} />
+            <GooglePlacesSearch placeholder="Where to?" onSelect={() => {}} inputRef={inputRef} />
         </View>
     );
 };
@@ -132,18 +143,16 @@ const MapWithSearch = ({ inputRef }) => {
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
-        top: 30,
+        top: 100,
         width: '90%',
         alignSelf: 'center',
         zIndex: 9999,
     },
     input: {
-        borderRadius: 0,
+        borderRadius: 5,
         marginHorizontal: 10,
         color: '#000',
-        borderColor: Colors.light.tint,
         backgroundColor: Colors.light.background,
-        borderWidth: 1,
         height: 45,
         paddingHorizontal: 12,
         fontSize: 16,
@@ -152,23 +161,13 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowOffset: { width: 0, height: 1 },
         shadowRadius: 1,
-        top: 25
     },
     suggestionsList: {
         backgroundColor: '#FFF',
         maxHeight: 250,
-        borderRadius: 0,
-        marginTop: 1,
+        marginTop: 5,
         marginHorizontal: 10,
-        shadowColor: '#000',
-        shadowOpacity: 0.2,
-        shadowOffset: { width: 0, height: 1 },
-        shadowRadius: 1,
         elevation: 3,
-        borderWidth: 1,
-        borderColor: '#000',
-        borderTopWidth: 0,
-        top: 25
     },
     suggestionItem: {
         padding: 12,
@@ -189,13 +188,7 @@ const styles = StyleSheet.create({
         padding: 8,
         marginHorizontal: 10,
         marginTop: 5,
-        borderRadius: 0,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-    },
-    statusText: {
-        color: '#555',
-        textAlign: 'center',
+        borderRadius: 5,
     },
     errorText: {
         color: '#D00',
